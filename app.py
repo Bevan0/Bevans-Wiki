@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 import sqlite3
 
 app = Flask(__name__)
@@ -24,8 +24,12 @@ def setup():
         Store.pages.append(Page(page[0], page[1], page[2]))
     con.close()
 
+@app.route("/")
+def route_home():
+    return redirect("/wiki/Main Page")
+
 @app.route("/wiki/<page_name>")
-def route_home(page_name):
+def route_page(page_name):
     con = sqlite3.connect("database.sqlite3")
     cur = con.cursor()
     query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
