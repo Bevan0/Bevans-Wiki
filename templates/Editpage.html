@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Editing: {{ page.name }} | Bevan's Wiki</title>
+    </head>
+    <body>
+        <h1>You are editing <i>{{ page.name }}</i></h1>
+        <form>
+            <textarea rows="8" cols="80" name="content">{{ page.content }}</textarea>
+            <p></p>
+            <input type="submit">
+        </form>
+    </body>
+</html>

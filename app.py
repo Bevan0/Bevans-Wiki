@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 import sqlite3
 
 app = Flask(__name__)
@@ -38,6 +38,26 @@ def route_page(page_name):
         return render_template("Wikipage.html", page=Page(0, page_name, "Page not found on this wiki."))
     else:
         return render_template("Wikipage.html", page=Page(query[0][0], query[0][1], query[0][2]))
+
+@app.route("/edit/<page_name>")
+def route_edit(page_name):
+    if request.args.get("content") == None:
+        print("len 0")
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
+        con.close()
+        if len(query) == 0:
+            return redirect("/wiki/{}".format(page_name))
+        else:
+            return render_template("Editpage.html", page=Page(query[0][0], query[0][1], query[0][2]))
+    else:
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        cur.execute("UPDATE pages SET content=? WHERE name=?", (request.args.get("content"), page_name))
+        con.commit()
+        con.close()
+        return redirect("/wiki/{}".format(page_name))
 
 if __name__ == "__main__":
     app.run(debug=True)
