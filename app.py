@@ -92,5 +92,24 @@ def delete_page():
         con.close()
         return redirect("/wiki/Main Page")
 
+@app.route("/move")
+def move_page():
+    if (request.args.get("name") == None or request.args.get("dest") == None):
+        if request.args.get("default") != None:
+            return render_template("Movepage.html", default=request.args.get("default"))
+        else:
+            return render_template("Movepage.html", default="")
+    else:
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
+            return "Page you are trying to move doesn't exist"
+        else:
+            cur.execute("UPDATE pages SET name=? WHERE name=?", (request.args.get("dest"), request.args.get("name")))
+        con.commit()
+        con.close()
+        return redirect("/wiki/{}".format(request.args.get("dest")))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
