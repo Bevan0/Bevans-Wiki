@@ -77,7 +77,10 @@ def create_page():
 @app.route("/delete")
 def delete_page():
     if request.args.get("name") == None:
-        return render_template("Deletepage.html")
+        if request.args.get("default") != None:
+            return render_template("Deletepage.html", default=request.args.get("default"))
+        else:
+            return render_template("Deletepage.html", default="")
     else:
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
