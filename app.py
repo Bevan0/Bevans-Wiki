@@ -59,5 +59,35 @@ def route_edit(page_name):
         con.close()
         return redirect("/wiki/{}".format(page_name))
 
+@app.route("/create")
+def create_page():
+    if request.args.get("name") == None:
+        return render_template("Createpage.html")
+    else:
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() != None:
+            return "Page you are trying to create exists"
+        else:
+            cur.execute("INSERT INTO pages (name, content) VALUES (?, 'Page is currently being created. Edit this to finish the page creation process.')", (request.args.get("name"), ))
+        con.commit()
+        con.close()
+        return redirect("/edit/{}".format(request.args.get("name")))
+
+@app.route("/delete")
+def delete_page():
+    if request.args.get("name") == None:
+        return render_template("Deletepage.html")
+    else:
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
+            return "Page you are trying to delete doesn't exist"
+        else:
+            cur.execute("DELETE FROM pages WHERE name=?", (request.args.get("name"), ))
+        con.commit()
+        con.close()
+        return redirect("/wiki/Main Page")
+
 if __name__ == "__main__":
     app.run(debug=True)
