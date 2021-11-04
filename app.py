@@ -26,10 +26,14 @@ def setup():
 
 @app.route("/wiki/<page_name>")
 def route_home(page_name):
-    for page in Store.pages:
-        if page.name == page_name:
-            return render_template("Wikipage.html", page=page)
-    return render_template("Wikipage.html", page=Page(0, page_name, "Page not found on this wiki."))
+    con = sqlite3.connect("database.sqlite3")
+    cur = con.cursor()
+    query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
+    con.close()
+    if len(query) == 0:
+        return render_template("Wikipage.html", page=Page(0, page_name, "Page not found on this wiki."))
+    else:
+        return render_template("Wikipage.html", page=Page(query[0][0], query[0][1], query[0][2]))
 
 if __name__ == "__main__":
     app.run(debug=True)
