@@ -10,6 +10,7 @@
         {% else %}
         <a href="/create?default={{ page.name }}">Create this page</a>
         {% endif %}
+        <form><input type="text" name="search" /><input type="submit" value="Search" /></form>
         <p>{{ page.content }}</p>
     </body>
 </html>

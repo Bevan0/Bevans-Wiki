@@ -31,6 +31,8 @@ def route_home():
 
 @app.route("/wiki/<page_name>")
 def route_page(page_name):
+    if request.args.get("search") != None:
+        return redirect("/wiki/{}".format(request.args.get("search")))
     con = sqlite3.connect("database.sqlite3")
     cur = con.cursor()
     query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
