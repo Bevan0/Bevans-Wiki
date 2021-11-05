@@ -101,8 +101,8 @@ def delete_page():
 @app.route("/move")
 def move_page():
     if (request.args.get("name") == None or request.args.get("dest") == None):
-        if request.args.get("default") != None:
-            return render_template("Movepage.html", default=request.args.get("default"))
+        if request.args.get("name") != None:
+            return render_template("Movepage.html", default=request.args.get("name"))
         else:
             return render_template("Movepage.html", default="")
     else:
