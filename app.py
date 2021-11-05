@@ -1,7 +1,14 @@
+from sqlite3.dbapi2 import Cursor
 from flask import Flask, render_template, redirect, request
+import flask_login
+
 import sqlite3
+import hashlib
 
 app = Flask(__name__)
+app.secret_key = b'>\xec\xf1\xb2rB\xf6\x03\xbc\xee|\x0e2\xa2y\xd82\x9b\xc6\x84m\xbd\x84\x0b'
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
 
 class Page:
     id: int
@@ -13,6 +20,38 @@ class Page:
         self.name = name
         self.content = content
         self.exists = exists
+
+class User:
+    id: int
+    username: str
+    authenticated: bool = False
+    active: bool = True
+    anonymous: bool = False
+
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
+    
+    def is_authenticated(self):
+        return self.authenticated
+    
+    def is_active(self):
+        return self.active
+    
+    def is_anonymous(self):
+        return self.anonymous
+    
+    def get_id(self):
+        return self.id
+
+@login_manager.user_loader
+def load_user(user_id):
+    con = sqlite3.connect("database.sqlite3")
+    cur = con.cursor()
+    query = cur.execute("SELECT * FROM users WHERE id=?", (user_id, )).fetchone()
+    con.close()
+    if query == None: return None
+    else: return User(query[0], query[1])
 
 @app.route("/")
 def route_home():
@@ -105,6 +144,31 @@ def move_page():
         con.close()
         return redirect("/wiki/{}".format(request.args.get("dest")))
 
+@app.route("/login", methods=["GET", "POST"])
+def route_login():
+    if request.method == "GET":
+        return render_template("Login.html")
+    else:
+        if request.form.get("username") == None or request.form.get("password") == None:
+            return "Bad request"
+        username = request.form.get("username")
+        password = hashlib.sha256(request.form.get("password").encode("utf-8"))
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        query = cur.execute("SELECT * FROM users WHERE username=?", (username, )).fetchone()
+        con.close()
+        if query == None:
+            return "User does not exist"
+        if query[2] != password.hexdigest().upper():
+            return "Wrong password"
+        flask_login.login_user(User(query[0], query[1]))
+        return redirect("/wiki/Main Page")
+
+@app.route("/logout")
+@flask_login.login_required
+def route_logout():
+    flask_login.logout_user()
+    return redirect("/wiki/Main Page")
 
 if __name__ == "__main__":
     app.run(debug=True)
