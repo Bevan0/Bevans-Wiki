@@ -5,7 +5,11 @@
     </head>
     <body>
         <h1>{{ page.name }}</h1>
+        {% if page.exists %}
         <a href="/edit/{{ page.name }}">Edit this page</a> | <a href="/delete?default={{ page.name }}">Delete this page</a> | <a href="/move?default={{ page.name }}">Move this page</a>
+        {% else %}
+        <a href="/create?default={{ page.name }}">Create this page</a>
+        {% endif %}
         <p>{{ page.content }}</p>
     </body>
 </html>

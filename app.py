@@ -11,10 +11,11 @@ class Page:
     name: str
     content: str
 
-    def __init__(self, id, name, content):
+    def __init__(self, id, name, content, exists=True):
         self.id = id
         self.name = name
         self.content = content
+        self.exists = exists
 
 @app.before_first_request
 def setup():
@@ -35,7 +36,7 @@ def route_page(page_name):
     query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
     con.close()
     if len(query) == 0:
-        return render_template("Wikipage.html", page=Page(0, page_name, "Page not found on this wiki."))
+        return render_template("Wikipage.html", page=Page(0, page_name, "Page not found on this wiki.", exists=False))
     else:
         return render_template("Wikipage.html", page=Page(query[0][0], query[0][1], query[0][2]))
 
@@ -62,7 +63,10 @@ def route_edit(page_name):
 @app.route("/create")
 def create_page():
     if request.args.get("name") == None:
-        return render_template("Createpage.html")
+        if request.args.get("default") == None:
+            return render_template("Createpage.html", default="")
+        else:
+            return render_template("Createpage.html", default=request.args.get("default"))
     else:
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
