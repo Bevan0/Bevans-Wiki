@@ -170,5 +170,23 @@ def route_logout():
     flask_login.logout_user()
     return redirect("/wiki/Main Page")
 
+@app.route("/register", methods=["GET", "POST"])
+def route_register_account():
+    if request.method == "GET":
+        return render_template("Register.html")
+    else:
+        if request.form.get("username") == None or request.form.get("password") == None:
+            return "Bad request"
+        username = request.form.get("username")
+        password = hashlib.sha256(request.form.get("password").encode("utf-8")).hexdigest().upper()
+        con = sqlite3.connect("database.sqlite3")
+        cur = con.cursor()
+        if len(cur.execute("SELECT username FROM users WHERE username=?", (username, )).fetchall()) != 0:
+            return "Username taken"
+        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        con.commit()
+        con.close()
+        return redirect("/login")
+
 if __name__ == "__main__":
     app.run(debug=True)
