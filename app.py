@@ -1,4 +1,3 @@
-from sqlite3.dbapi2 import Cursor
 from flask import Flask, render_template, redirect, request
 import flask_login
 
