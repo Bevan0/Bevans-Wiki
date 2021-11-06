@@ -73,7 +73,6 @@ def route_page(page_name):
 @flask_login.login_required
 def route_edit(page_name):
     if request.args.get("content") == None:
-        print("len 0")
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
         query = cur.execute("SELECT * FROM pages WHERE name='{}'".format(page_name)).fetchall()
@@ -86,7 +85,7 @@ def route_edit(page_name):
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
         cur.execute("UPDATE pages SET content=? WHERE name=?", (request.args.get("content"), page_name))
-        cur.execute("INSERT INTO logs (executor_id, action, target_id) VALUES (?, ?, ?)", (flask_login.current_user.id, "PAGE:EDIT", cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0]))
+        cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:EDIT", cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0], "{} edited page {}".format(flask_login.current_user.username, page_name)))
         con.commit()
         con.close()
         return redirect("/wiki/{}".format(page_name))
@@ -106,7 +105,7 @@ def create_page():
             return "Page you are trying to create exists"
         else:
             cur.execute("INSERT INTO pages (name, content) VALUES (?, 'Page is currently being created. Edit this to finish the page creation process.')", (request.args.get("name"), ))
-            cur.execute("INSERT INTO logs (executor_id, action, target_id) VALUES (?, ?, ?)", (flask_login.current_user.id, "PAGE:CREATE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:CREATE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} created page {}".format(flask_login.current_user.username, request.args.get("name"))))
         con.commit()
         con.close()
         return redirect("/edit/{}".format(request.args.get("name")))
@@ -125,7 +124,7 @@ def delete_page():
         if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
             return "Page you are trying to delete doesn't exist"
         else:
-            cur.execute("INSERT INTO logs (executor_id, action, target_id) VALUES (?, ?, ?)", (flask_login.current_user.id, "PAGE:DELETE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:DELETE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} deleted page {}".format(flask_login.current_user.username, request.args.get("name"))))
             cur.execute("DELETE FROM pages WHERE name=?", (request.args.get("name"), ))
         con.commit()
         con.close()
@@ -146,7 +145,7 @@ def move_page():
             return "Page you are trying to move doesn't exist"
         else:
             cur.execute("UPDATE pages SET name=? WHERE name=?", (request.args.get("dest"), request.args.get("name")))
-            cur.execute("INSERT INTO logs (executor_id, action, target_id) VALUES (?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} moved page {} to {}".format(flask_login.current_user.username, request.args.get("name"), request.args.get("dest"))))
         con.commit()
         con.close()
         return redirect("/wiki/{}".format(request.args.get("dest")))
