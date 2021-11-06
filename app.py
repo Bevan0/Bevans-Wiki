@@ -143,6 +143,8 @@ def move_page():
         cur = con.cursor()
         if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
             return "Page you are trying to move doesn't exist"
+        elif cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("dest"), )).fetchone() == None:
+            return "Page destination already exists"
         else:
             cur.execute("UPDATE pages SET name=? WHERE name=?", (request.args.get("dest"), request.args.get("name")))
             cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} moved page {} to {}".format(flask_login.current_user.username, request.args.get("name"), request.args.get("dest"))))
