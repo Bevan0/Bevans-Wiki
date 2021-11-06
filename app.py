@@ -152,6 +152,20 @@ def move_page():
         con.close()
         return redirect("/wiki/{}".format(request.args.get("dest")))
 
+@app.route("/log/<page_name>")
+def route_log(page_name):
+    logs = []
+    con = sqlite3.connect("database.sqlite3")
+    cur = con.cursor()
+    q1 = cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0]
+    query = cur.execute("SELECT * FROM logs WHERE target_id=?", (q1, )).fetchall()
+    con.close()
+    for log in query:
+        if not log[2][:5] == "PAGE:":
+            continue
+        logs.append(log[4])
+    return render_template("Logs.html", page_name=page_name, logs=logs)
+
 @app.route("/login", methods=["GET", "POST"])
 def route_login():
     if request.method == "GET":

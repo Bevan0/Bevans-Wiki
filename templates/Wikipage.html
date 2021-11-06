@@ -7,7 +7,7 @@
         {% if current_user.is_authenticated %}You are logged in as <i>{{ current_user.username }}</i> | <a href="/logout">Logout</a> {% else %} You are not logged in | <a href="/login">Login</a> {% endif %}
         <h1>{{ page.name }}</h1>
         {% if page.exists %}
-        <a href="/edit/{{ page.name }}">Edit this page</a> | <a href="/delete?default={{ page.name }}">Delete this page</a> | <a href="/move?name={{ page.name }}">Move this page</a>
+        <a href="/edit/{{ page.name }}">Edit this page</a> | <a href="/delete?default={{ page.name }}">Delete this page</a> | <a href="/move?name={{ page.name }}">Move this page</a> | <a href="/log/{{page.name}}">View log information</a>
         {% else %}
         <a href="/create?default={{ page.name }}">Create this page</a>
         {% endif %}

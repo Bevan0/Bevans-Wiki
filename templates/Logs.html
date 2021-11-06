@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Viewing logs of {{ page_name }} | Bevan's Wiki</title>
+    </head>
+    <body>
+        <h1>Logs for {{ page_name }}</h1>
+        <b>Ordered from oldest to newest.</b>
+        <ul>
+        {% for log in logs %}
+        <li>{{ log }}</li>
+        {% endfor %}
+        </ul>
+    </body>
+</html>
