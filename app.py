@@ -3,6 +3,7 @@ import flask_login
 
 import sqlite3
 import hashlib
+import re
 
 app = Flask(__name__)
 app.secret_key = b'>\xec\xf1\xb2rB\xf6\x03\xbc\xee|\x0e2\xa2y\xd82\x9b\xc6\x84m\xbd\x84\x0b'
@@ -200,6 +201,8 @@ def route_register_account():
         if request.form.get("username") == None or request.form.get("password") == None:
             return "Bad request"
         username = request.form.get("username")
+        if not re.compile("^[0-9, A-z]*$").match(username):
+            return "Username can only contain letters and numbers"
         password = hashlib.sha256(request.form.get("password").encode("utf-8")).hexdigest().upper()
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
