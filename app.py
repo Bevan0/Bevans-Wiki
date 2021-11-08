@@ -4,6 +4,8 @@ import flask_login
 import sqlite3
 import hashlib
 import re
+import time
+import datetime
 
 app = Flask(__name__)
 app.secret_key = b'>\xec\xf1\xb2rB\xf6\x03\xbc\xee|\x0e2\xa2y\xd82\x9b\xc6\x84m\xbd\x84\x0b'
@@ -43,6 +45,9 @@ class User:
     
     def get_id(self):
         return self.id
+
+def get_datetime():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -86,7 +91,7 @@ def route_edit(page_name):
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
         cur.execute("UPDATE pages SET content=? WHERE name=?", (request.args.get("content"), page_name))
-        cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:EDIT", cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0], "{} edited page {}".format(flask_login.current_user.username, page_name)))
+        cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:EDIT", cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0], "{} edited page {} at {}".format(flask_login.current_user.username, page_name, get_datetime()), time.time()))
         con.commit()
         con.close()
         return redirect("/wiki/{}".format(page_name))
@@ -106,7 +111,7 @@ def create_page():
             return "Page you are trying to create exists"
         else:
             cur.execute("INSERT INTO pages (name, content) VALUES (?, 'Page is currently being created. Edit this to finish the page creation process.')", (request.args.get("name"), ))
-            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:CREATE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} created page {}".format(flask_login.current_user.username, request.args.get("name"))))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:CREATE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} created page {} at {}".format(flask_login.current_user.username, request.args.get("name"), get_datetime()), time.time()))
         con.commit()
         con.close()
         return redirect("/edit/{}".format(request.args.get("name")))
@@ -125,7 +130,7 @@ def delete_page():
         if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
             return "Page you are trying to delete doesn't exist"
         else:
-            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:DELETE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} deleted page {}".format(flask_login.current_user.username, request.args.get("name"))))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:DELETE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} deleted page {} at {}".format(flask_login.current_user.username, request.args.get("name"), get_datetime()), time.time()))
             cur.execute("DELETE FROM pages WHERE name=?", (request.args.get("name"), ))
         con.commit()
         con.close()
@@ -148,7 +153,7 @@ def move_page():
             return "Page destination already exists"
         else:
             cur.execute("UPDATE pages SET name=? WHERE name=?", (request.args.get("dest"), request.args.get("name")))
-            cur.execute("INSERT INTO logs (executor_id, action, target_id, message) VALUES (?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} moved page {} to {}".format(flask_login.current_user.username, request.args.get("name"), request.args.get("dest"))))
+            cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} moved page {} to {} at {}".format(flask_login.current_user.username, request.args.get("name"), request.args.get("dest"), get_datetime()), time.time()))
         con.commit()
         con.close()
         return redirect("/wiki/{}".format(request.args.get("dest")))
