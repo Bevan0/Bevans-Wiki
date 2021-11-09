@@ -209,7 +209,7 @@ def route_register_account():
         if not re.compile("^[0-9, A-z]*$").match(username):
             return "Username can only contain letters and numbers"
         password = hashlib.sha256(request.form.get("password").encode("utf-8")).hexdigest().upper()
-        if len(password) <= 7:
+        if len(request.form.get("password")) < 8:
             return "Passwords must be 8 characters or longer"
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
