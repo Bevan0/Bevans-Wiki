@@ -172,6 +172,17 @@ def route_log(page_name):
         logs.append(log[4])
     return render_template("Logs.html", page_name=page_name, logs=logs)
 
+@app.route("/log")
+def route_all_logs():
+    logs = []
+    con = sqlite3.connect("database.sqlite3")
+    cur = con.cursor()
+    query = cur.execute("SELECT * FROM logs").fetchall()
+    con.close()
+    for log in query:
+        logs.append(log[4])
+    return render_template("Logs.html", page_name="everything", logs=logs)
+
 @app.route("/login", methods=["GET", "POST"])
 def route_login():
     if request.method == "GET":
@@ -216,6 +227,7 @@ def route_register_account():
         if len(cur.execute("SELECT username FROM users WHERE username=?", (username, )).fetchall()) != 0:
             return "Username taken"
         cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (0, "ACCOUNT:CREATE", cur.execute("SELECT id FROM users WHERE username=?", (request.form.get("username"), )).fetchone()[0], "User {} was created at {}".format(request.form.get("username"), get_datetime()), time.time()))
         con.commit()
         con.close()
         return redirect("/login")

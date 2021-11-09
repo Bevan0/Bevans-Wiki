@@ -5,7 +5,8 @@
     </head>
     <body>
         <h1>Logs for {{ page_name }}</h1>
-        <b>Ordered from oldest to newest.</b>
+        {% if page_name != "everything" %} <a href="/log">View all logs on this wiki</a> {% endif %}
+        <p><b>Ordered from oldest to newest.</b></p>
         <ul>
         {% for log in logs %}
         <li>{{ log }}</li>
