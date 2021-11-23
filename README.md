@@ -11,4 +11,4 @@ One key element of Bevan's Wiki is customization. This is achieved through skinn
 ## Contributing
 Open a pull request to contribute changes. I suggest chipping away at the to-do list, but feel free to do whatever.
 
-To setup a development environment, firstly clone the repository. Replace the secret key in app.py for security, and then you can run the server with either `flask run` or with the normal `python app.py`. The SQLite database has been setup for you.
+To setup a development environment, firstly clone the repository. Replace the secret key in app.py for security, and then run `python generate_db.py` to create a template database. After that, you can run the server with either `flask run` or with the normal `python app.py`.
