@@ -13,6 +13,7 @@ except FileNotFoundError:
 con = sqlite3.connect("database.sqlite3")
 cur = con.cursor()
 
+# Create tables and Main Page
 cur.execute('''CREATE TABLE "logs" (
 	"log_id"	INTEGER NOT NULL UNIQUE,
 	"executor_id"	TEXT NOT NULL,
@@ -38,5 +39,8 @@ cur.execute('''CREATE TABLE "users" (
 );''')
 
 cur.execute('''INSERT INTO pages (name, content) VALUES ("Main Page", "Welcome to your new wiki!")''')
+
+# Commit changes to database
+con.commit()
 
 print("New database created.")
