@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, request
 import flask_login
 
 import sqlite3
-import hashlib
+from werkzeug import security
 import re
 import time
 import datetime
@@ -191,14 +191,15 @@ def route_login():
         if request.form.get("username") == None or request.form.get("password") == None:
             return "Bad request"
         username = request.form.get("username")
-        password = hashlib.sha256(request.form.get("password").encode("utf-8"))
+        password = request.form.get("password")
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
         query = cur.execute("SELECT * FROM users WHERE username=?", (username, )).fetchone()
         con.close()
         if query == None:
             return "User does not exist"
-        if query[2] != password.hexdigest().upper():
+        print(query[2])
+        if not security.check_password_hash(query[2], password):
             return "Wrong password"
         flask_login.login_user(User(query[0], query[1]))
         return redirect("/wiki/Main Page")
@@ -219,14 +220,15 @@ def route_register_account():
         username = request.form.get("username")
         if not re.compile("^[0-9, A-z]*$").match(username):
             return "Username can only contain letters and numbers"
-        password = hashlib.sha256(request.form.get("password").encode("utf-8")).hexdigest().upper()
-        if len(request.form.get("password")) < 8:
+        password = request.form.get("password")
+        if len(password) < 8:
             return "Passwords must be 8 characters or longer"
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
         if len(cur.execute("SELECT username FROM users WHERE username=?", (username, )).fetchall()) != 0:
             return "Username taken"
-        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        hashed_password = security.generate_password_hash(password)
+        cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
         cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (0, "ACCOUNT:CREATE", cur.execute("SELECT id FROM users WHERE username=?", (request.form.get("username"), )).fetchone()[0], "User {} was created at {}".format(request.form.get("username"), get_datetime()), time.time()))
         con.commit()
         con.close()
