@@ -3,8 +3,11 @@
 import sqlite3
 import os
 
-# Delete old database
-os.remove("database.sqlite3")
+# Delete old database, if it exists
+try:
+    os.remove("database.sqlite3")
+except FileNotFoundError:
+    print("Existing database doesn't exist, not removing it")
 
 # Create new database and connect to it
 con = sqlite3.connect("database.sqlite3")
