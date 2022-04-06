@@ -16,12 +16,16 @@ class Page:
     id: int
     name: str
     content: str
+    edit_protection_lvl: int = 0  # 0 = everyone, 1 = everyone with lvl 1 protection, 2 = everyone with lvl 2 protection, etc
+    meta_protection_lvl: int = 0  # 0 = everyone, 1 = everyone with lvl 1 protection, 2 = everyone with lvl 2 protection, etc
 
-    def __init__(self, id, name, content, exists=True):
+    def __init__(self, id, name, content, exists=True, edit_protection_lvl=0, meta_protection_lvl=0):
         self.id = id
         self.name = name
         self.content = content
         self.exists = exists
+        self.edit_protection_lvl = edit_protection_lvl
+        self.meta_protection_lvl = meta_protection_lvl
 
 class User:
     id: int
@@ -29,10 +33,14 @@ class User:
     authenticated: bool = False
     active: bool = True
     anonymous: bool = False
+    max_edit_protection_lvl: int = 0  # Page edit and creation protection levels
+    max_meta_protection_lvl: int = 0  # Delete and move protection levels
 
-    def __init__(self, id, username):
+    def __init__(self, id, username, edit_protection_lvl, meta_protection_lvl):
         self.id = id
         self.username = username
+        self.max_edit_protection_lvl = edit_protection_lvl
+        self.max_meta_protection_lvl = meta_protection_lvl
     
     def is_authenticated(self):
         return self.authenticated
@@ -46,6 +54,12 @@ class User:
     def get_id(self):
         return self.id
 
+    def can_edit(self, protection_required):
+        return self.max_edit_protection_lvl >= protection_required
+    
+    def can_meta(self, protection_required):
+        return self.max_meta_protection_lvl >= protection_required
+
 def get_datetime():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -56,7 +70,7 @@ def load_user(user_id):
     query = cur.execute("SELECT * FROM users WHERE id=?", (user_id, )).fetchone()
     con.close()
     if query == None: return None
-    else: return User(query[0], query[1])
+    else: return User(query[0], query[1], query[3], query[4])
 
 @app.route("/")
 def route_home():
@@ -90,6 +104,8 @@ def route_edit(page_name):
     else:
         con = sqlite3.connect("database.sqlite3")
         cur = con.cursor()
+        if not flask_login.current_user.can_edit(cur.execute("SELECT edit_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]):
+            return "You don't have permission to edit this page (your edit level: {}, required level: {})".format(flask_login.current_user.max_edit_protection_level, cur.execute("SELECT edit_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0])
         cur.execute("UPDATE pages SET content=? WHERE name=?", (request.args.get("content"), page_name))
         cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:EDIT", cur.execute("SELECT * FROM pages WHERE name=?", (page_name, )).fetchone()[0], "{} edited page {} at {}".format(flask_login.current_user.username, page_name, get_datetime()), time.time()))
         con.commit()
@@ -129,6 +145,8 @@ def delete_page():
         cur = con.cursor()
         if cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone() == None:
             return "Page you are trying to delete doesn't exist"
+        elif not flask_login.current_user.can_meta(cur.execute("SELECT meta_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]):
+            return "You don't have permission to delete this page (your meta level: {}, required level: {})".format(flask_login.current_user.max_meta_protection_level, cur.execute("SELECT meta_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0])
         else:
             cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:DELETE", cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0], "{} deleted page {} at {}".format(flask_login.current_user.username, request.args.get("name"), get_datetime()), time.time()))
             cur.execute("DELETE FROM pages WHERE name=?", (request.args.get("name"), ))
@@ -151,6 +169,8 @@ def move_page():
             return "Page you are trying to move doesn't exist"
         elif cur.execute("SELECT * FROM pages WHERE name=?", (request.args.get("dest"), )).fetchone() != None:
             return "Page destination already exists"
+        elif not flask_login.current_user.can_meta(cur.execute("SELECT meta_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0]):
+            return "You don't have permission to move this page (your meta level: {}, required level: {})".format(flask_login.current_user.max_meta_protection_level, cur.execute("SELECT meta_prot FROM pages WHERE name=?", (request.args.get("name"), )).fetchone()[0])
         else:
             cur.execute("UPDATE pages SET name=? WHERE name=?", (request.args.get("dest"), request.args.get("name")))
             cur.execute("INSERT INTO logs (executor_id, action, target_id, message, timestamp) VALUES (?, ?, ?, ?, ?)", (flask_login.current_user.id, "PAGE:MOVE", cur.execute("SELECT id FROM pages WHERE name=?", (request.args.get("dest"), )).fetchone()[0], "{} moved page {} to {} at {}".format(flask_login.current_user.username, request.args.get("name"), request.args.get("dest"), get_datetime()), time.time()))

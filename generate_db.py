@@ -28,6 +28,8 @@ cur.execute('''CREATE TABLE "pages" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"name"	TEXT NOT NULL UNIQUE,
 	"content"	TEXT NOT NULL,
+	"edit_prot"	INTEGER NOT NULL,
+	"meta_prot"	INTEGER NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );''')
 
@@ -35,6 +37,8 @@ cur.execute('''CREATE TABLE "users" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"username"	TEXT NOT NULL UNIQUE,
 	"password"	TEXT NOT NULL,
+	"edit_prot"	INTEGER NOT NULL,
+	"meta_prot"	INTEGER NOT NULL,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );''')
 
